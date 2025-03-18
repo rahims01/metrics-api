@@ -1,0 +1,10 @@
+---
+applications:
+- name: metrics-api
+  memory: 256M
+  instances: 1
+  buildpacks:
+    - python_buildpack
+  env:
+    FLASK_APP: main.py
+    FLASK_RUN_PORT: 8080

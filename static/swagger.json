@@ -1,0 +1,239 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Metrics Collection API",
+    "version": "2.0",
+    "description": "API for collecting and exposing metrics from TypeScript clients"
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "paths": {
+    "/v2/app/{app_id}/metrics": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "description": "Application identifier for API access control",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Submit metrics data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetricBatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Metrics accepted"
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Invalid application ID"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "get": {
+        "summary": "Retrieve consumed client metrics",
+        "description": "Get the latest metrics data from desktop clients",
+        "responses": {
+          "200": {
+            "description": "List of consumed metrics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetricsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid application ID"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v2/app/{app_id}/health": {
+      "parameters": [
+        {
+          "name": "app_id",
+          "in": "path",
+          "required": true,
+          "description": "Application identifier for API access control",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Get service health status",
+        "description": "Get detailed health status of all service components",
+        "responses": {
+          "200": {
+            "description": "Service health information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid application ID"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MetricPayload": {
+        "type": "object",
+        "required": ["payload", "profileId", "timestamp"],
+        "properties": {
+          "payload": {
+            "type": "object",
+            "description": "Metric payload data"
+          },
+          "profileId": {
+            "type": "string",
+            "description": "Profile identifier"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Metric timestamp"
+          },
+          "tags": {
+            "type": "object",
+            "description": "Additional tags (e.g., host, environment)",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MetricBatch": {
+        "type": "object",
+        "required": ["metrics"],
+        "properties": {
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricPayload"
+            },
+            "description": "List of metrics"
+          }
+        }
+      },
+      "MetricsResponse": {
+        "type": "object",
+        "properties": {
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetricPayload"
+            },
+            "description": "List of collected metrics"
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of metrics"
+          },
+          "consumer_status": {
+            "type": "string",
+            "enum": ["connected", "disconnected"],
+            "description": "Kafka consumer connection status"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": ["status", "components", "environment", "timestamp"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy", "degraded"],
+            "description": "Overall service status"
+          },
+          "components": {
+            "type": "object",
+            "properties": {
+              "kafka_producer": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["connected", "disconnected"]
+                  },
+                  "details": {
+                    "type": "string"
+                  }
+                }
+              },
+              "kafka_consumer": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["connected", "disconnected"]
+                  },
+                  "details": {
+                    "type": "string"
+                  }
+                }
+              },
+              "metrics_stats": {
+                "type": "object",
+                "properties": {
+                  "total_received": {
+                    "type": "integer"
+                  },
+                  "successfully_sent": {
+                    "type": "integer"
+                  },
+                  "failed_sends": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "environment": {
+            "type": "string",
+            "description": "Current environment (development/production)"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Health check timestamp"
+          }
+        }
+      }
+    }
+  }
+}

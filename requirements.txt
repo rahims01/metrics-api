@@ -1,0 +1,5 @@
+Flask
+python-dotenv
+confluent-kafka
+prometheus-client
+gunicorn
